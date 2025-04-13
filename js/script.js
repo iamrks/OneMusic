@@ -1,35 +1,22 @@
 let mp3Files = [];
 let currentSongIndex = 0;
-let isPlaying = false; // Variable to track play/pause state
-let duration = 0; // Total duration of the current song
-let currentTimeInterval; // To store the interval for updating current time
-
-const repoOwner = "codekripa";
-let repoName = "NewSongs";
+let isPlaying = false;
+let duration = 0;
+let currentTimeInterval;
 
 // Get the audio element
 const audioElement = document.getElementById("audioElement");
 
-async function getMP3FilesRecursive(path = "") {
-  const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${path}`;
+const API_BASE_URL = 'https://one-audio-streamer.onrender.com/api';
+
+async function getSongsList() {
   try {
-    const response = await fetch(url);
-    const files = await response.json();
-    let mp3Files = [];
-    for (let file of files) {
-      if (file.type === "file" && file.name.endsWith(".mp3")) {
-        mp3Files.push({
-          name: file.name,
-          url: `https://raw.githubusercontent.com/${repoOwner}/${repoName}/main/${file.path}`,
-        });
-      } else if (file.type === "dir") {
-        const subDirectoryMP3s = await getMP3FilesRecursive(file.path);
-        mp3Files = mp3Files.concat(subDirectoryMP3s);
-      }
-    }
+    const response = await fetch(`${API_BASE_URL}/songs/list`);
+    mp3Files = await response.json();
     return mp3Files;
   } catch (error) {
-    console.error("Error fetching file list:", error);
+    console.error("Error fetching songs list:", error);
+    return [];
   }
 }
 
@@ -58,9 +45,9 @@ function initializeTheme() {
 document.addEventListener('DOMContentLoaded', initializeTheme);
 
 async function displayMP3Urls() {
-  mp3Files = await getMP3FilesRecursive();
+  mp3Files = await getSongsList();
   if (mp3Files.length > 0) {
-    let songIndex = getSongIndexToLocalStorage(repoName);
+    let songIndex = getSongIndexToLocalStorage('playlist');
     
     // Update Now Playing info for initial song
     const initialSong = mp3Files[songIndex];
@@ -93,8 +80,8 @@ async function displayMP3Urls() {
       songListContainer.appendChild(listItem);
     });
   } else {
-    console.error("No MP3 files found.");
-    updateNowPlayingInfo(null); // This will show "Select a song"
+    console.error("No songs found.");
+    updateNowPlayingInfo(null);
   }
 }
 
@@ -120,28 +107,26 @@ function updateMediaSessionMetadata() {
   }
 }
 
-function playSpecificSong(index) {
-  // Update previous playing song's button if exists
+async function playSpecificSong(index) {
   const previousButton = document.querySelector(`.play-button[data-index="${currentSongIndex}"]`);
   if (previousButton) {
     previousButton.innerHTML = `<span class="material-icons-round">play_arrow</span>`;
   }
 
   currentSongIndex = index;
-  setSongIndexToLocalStorage(repoName, currentSongIndex);
+  setSongIndexToLocalStorage('playlist', currentSongIndex);
   const song = mp3Files[currentSongIndex];
   
-  // Update Now Playing info
   updateNowPlayingInfo(song.name);
   
-  audioElement.src = song.url;
+  audioElement.src = `${API_BASE_URL}${song.path}`;
   audioElement.load();
 
-  // Update the new song's button
-  const newButton = document.querySelector(`.play-button[data-index="${index}"]`);
-  if (newButton) {
-    newButton.innerHTML = `<span class="material-icons-round">pause</span>`;
-  }
+  // Add loadedmetadata event listener to get duration
+  audioElement.onloadedmetadata = () => {
+    duration = audioElement.duration;
+    updateTotalTime();
+  };
 
   audioElement.onplay = () => {
     isPlaying = true;
@@ -159,16 +144,6 @@ function playSpecificSong(index) {
   };
 
   audioElement.onended = nextSong;
-  audioElement.onseeked = updateSeekBar;
-  audioElement.onloadmetadata = () => {
-    duration = audioElement.duration;
-    if (!isNaN(duration) && duration > 0) {
-      updateSeekBar();
-      updateTotalTime();
-    }
-  };
-
-  updateMediaSessionMetadata();
   audioElement.play();
 }
 
@@ -254,9 +229,35 @@ function prevSong() {
   playSpecificSong(currentSongIndex);
 }
 
-function setSource(repo) {
-  repoName = repo;
-  displayMP3Urls();
+async function setSource(repo) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/songs/source`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ repo })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to change source');
+    }
+    
+    const { songs } = await response.json();
+    mp3Files = songs;
+    currentSongIndex = 0;
+    
+    // Update playlist name
+    document.querySelector('.playlist-name').textContent = `From: ${repo}`;
+    
+    // Update category button highlighting
+    updateCategoryButtons(repo);
+    
+    // Refresh the song list
+    displayMP3Urls();
+  } catch (error) {
+    console.error('Error changing source:', error);
+  }
 }
 
 function toggleDolby() {
@@ -309,5 +310,45 @@ function updateNowPlayingInfo(songName) {
     currentSongElement.textContent = songName || 'Select a song';
 }
 
-// Initialize
-displayMP3Urls();
+// Function to wake up the server
+async function wakeUpServer() {
+  try {
+    await fetch(`${API_BASE_URL}/health`);
+  } catch (error) {
+    console.log('Server waking up...');
+  }
+}
+
+// Call this when your app starts
+async function initializeApp() {
+  await wakeUpServer();
+  // Wait a bit for server to wake up if it was sleeping
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  // Then initialize your app
+  displayMP3Urls();
+}
+
+// Call initializeApp instead of displayMP3Urls on page load
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// Add this new function to handle category button highlighting
+function updateCategoryButtons(selectedRepo) {
+  // Remove active class from all category buttons
+  document.querySelectorAll('.category-btn').forEach(button => {
+    button.classList.remove('active');
+  });
+  
+  // Add active class to the selected button
+  const buttons = {
+    'NewSongs': 'New',
+    'OldMusic': 'Old',
+    'bhakti': 'Bhakti'
+  };
+  
+  // Find and highlight the correct button
+  document.querySelectorAll('.category-btn').forEach(button => {
+    if (button.textContent === buttons[selectedRepo]) {
+      button.classList.add('active');
+    }
+  });
+}
