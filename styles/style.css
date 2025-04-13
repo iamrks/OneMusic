@@ -64,6 +64,13 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .logo {
@@ -188,6 +195,35 @@ body {
   color: white;
 }
 
+.song-details {
+  flex: 1;
+  overflow: hidden; /* Contain the marquee */
+  position: relative;
+}
+
+.current-song-name {
+  margin: 0;
+  font-size: 1.1rem;
+  white-space: nowrap; /* Prevent line breaks */
+  display: inline-block; /* Required for marquee */
+  padding-left: 100%; /* Start from right side */
+  animation: marquee 20s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%); /* Move twice the width to ensure smooth loop */
+  }
+}
+
+/* Pause animation on hover */
+.current-song-name:hover {
+  animation-play-state: paused;
+}
+
 .song-details h2 {
   margin: 0;
   font-size: 1.1rem;
@@ -257,7 +293,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   display: flex;
   justify-content: center;
   gap: 20px;
-  margin: 1.5rem 0;
+  margin: 1.5rem 0 0 0;
 }
 
 .control-btn {
@@ -385,7 +421,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   .controls {
-    margin-bottom: 1.5rem;
+    margin: 1.5rem 0 0 0;
   }
 
   .songs-container {
@@ -482,4 +518,97 @@ input[type="range"]::-webkit-slider-thumb:hover {
   --accent-color: #ff4081;
   --button-bg: #333333;
   --hover-bg: #3d3d3d;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.icon-button:hover {
+  background: var(--secondary-bg);
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-input-wrapper {
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.search-container.active .search-input-wrapper {
+  width: 250px;
+  opacity: 1;
+  pointer-events: all;
+  margin-right: 8px;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 8px 32px 8px 16px;
+  border: none;
+  border-radius: 20px;
+  background: var(--secondary-bg);
+  color: var(--text-color);
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.clear-search {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--secondary-text);
+  cursor: pointer;
+  padding: 4px;
+  display: none;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.clear-search:hover {
+  opacity: 1;
+}
+
+/* Add highlight class for search results */
+.song-name .highlight {
+  background: var(--primary-color);
+  color: white;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* Add no results message styling */
+.no-results {
+  text-align: center;
+  padding: 20px;
+  color: var(--secondary-text);
+  font-style: italic;
 }

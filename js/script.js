@@ -3,6 +3,8 @@ let currentSongIndex = 0;
 let isPlaying = false;
 let duration = 0;
 let currentTimeInterval;
+let originalSongsList = [];
+let searchTimeout;
 
 // Get the audio element
 const audioElement = document.getElementById("audioElement");
@@ -49,6 +51,9 @@ async function displayMP3Urls() {
     showLoading();
     mp3Files = await getSongsList();
     if (mp3Files.length > 0) {
+      // Store original list
+      originalSongsList = [...mp3Files];
+      
       let songIndex = getSongIndexToLocalStorage('playlist');
       
       // Update Now Playing info for initial song
@@ -81,6 +86,9 @@ async function displayMP3Urls() {
         
         songListContainer.appendChild(listItem);
       });
+
+      // Initialize search after songs are loaded
+      initializeSearch();
     } else {
       console.error("No songs found.");
       updateNowPlayingInfo(null);
@@ -389,5 +397,134 @@ function initializeSongListHover() {
         playButton.textContent = 'music_note';
       }
     });
+  });
+}
+
+// Add search functionality
+function initializeSearch() {
+  const searchToggle = document.getElementById('searchToggle');
+  const searchContainer = document.querySelector('.search-container');
+  const searchInput = document.getElementById('searchInput');
+  const clearButton = document.getElementById('clearSearch');
+  
+  // Store original songs list when first loaded
+  originalSongsList = [...mp3Files];
+  
+  // Toggle search bar
+  searchToggle.addEventListener('click', () => {
+    searchContainer.classList.add('active');
+    searchInput.focus();
+  });
+  
+  // Close search when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!searchContainer.contains(e.target) && 
+        searchContainer.classList.contains('active') && 
+        searchInput.value.trim() === '') {
+      searchContainer.classList.remove('active');
+    }
+  });
+  
+  // Search input handler
+  searchInput.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.trim().toLowerCase();
+    
+    // Show/hide clear button
+    clearButton.style.display = searchTerm ? 'block' : 'none';
+    
+    // Use debouncing to prevent too many updates
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      performSearch(searchTerm);
+    }, 300);
+  });
+  
+  // Clear search
+  clearButton.addEventListener('click', () => {
+    searchInput.value = '';
+    clearButton.style.display = 'none';
+    resetSearch();
+    // Don't close the search container immediately to allow for new searches
+  });
+  
+  // Handle Escape key
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchInput.value = '';
+      clearButton.style.display = 'none';
+      resetSearch();
+      searchContainer.classList.remove('active');
+    }
+  });
+}
+
+function performSearch(searchTerm) {
+  if (!searchTerm) {
+    resetSearch();
+    return;
+  }
+  
+  const filteredSongs = originalSongsList.filter(song => 
+    song.name.toLowerCase().includes(searchTerm)
+  ).map(song => ({
+    ...song,
+    // Ensure we keep the original id/index
+    id: song.id
+  }));
+  
+  updateSongsList(filteredSongs, searchTerm);
+}
+
+function resetSearch() {
+  mp3Files = [...originalSongsList];
+  updateSongsList(mp3Files);
+}
+
+function updateSongsList(songs, searchTerm = '') {
+  const songListContainer = document.getElementById("songList");
+  songListContainer.innerHTML = '';
+  
+  if (songs.length === 0) {
+    songListContainer.innerHTML = `
+      <div class="no-results">
+        <span class="material-icons-round">search_off</span>
+        <p>No songs found</p>
+      </div>
+    `;
+    return;
+  }
+  
+  songs.forEach((song) => {
+    const listItem = document.createElement("li");
+    
+    // Highlight matching text if searching
+    let songName = song.name;
+    if (searchTerm) {
+      const regex = new RegExp(`(${searchTerm})`, 'gi');
+      songName = songName.replace(regex, '<span class="highlight">$1</span>');
+    }
+    
+    // Store the original index in the data attribute
+    listItem.innerHTML = `
+      <span class="song-name">${songName}</span>
+      <button class="play-button" data-original-index="${song.id}">
+        <span class="material-icons-round">
+          ${song.id === currentSongIndex && isPlaying ? 'pause' : 'play_arrow'}
+        </span>
+      </button>
+    `;
+    
+    const playButton = listItem.querySelector('.play-button');
+    playButton.addEventListener('click', () => {
+      // Use the original index stored in data-original-index
+      const originalIndex = parseInt(playButton.dataset.originalIndex);
+      if (originalIndex === currentSongIndex) {
+        togglePlayPause();
+      } else {
+        playSpecificSong(originalIndex);
+      }
+    });
+    
+    songListContainer.appendChild(listItem);
   });
 }
