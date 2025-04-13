@@ -137,7 +137,6 @@ body {
 .category-buttons {
   display: flex;
   gap: 10px;
-  margin: 1.5rem 0;
   padding: 0 10px;
 }
 
@@ -286,7 +285,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .songs-container {
-  margin-top: 2rem;
   padding: 1rem;
   border-radius: 12px;
   background: var(--secondary-bg);
@@ -363,7 +361,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   }
 
   .category-buttons {
-    margin-bottom: 1.5rem;
     overflow-x: auto;
     padding-bottom: 0.5rem;
     -webkit-overflow-scrolling: touch;
