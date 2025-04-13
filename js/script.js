@@ -45,43 +45,51 @@ function initializeTheme() {
 document.addEventListener('DOMContentLoaded', initializeTheme);
 
 async function displayMP3Urls() {
-  mp3Files = await getSongsList();
-  if (mp3Files.length > 0) {
-    let songIndex = getSongIndexToLocalStorage('playlist');
-    
-    // Update Now Playing info for initial song
-    const initialSong = mp3Files[songIndex];
-    updateNowPlayingInfo(initialSong.name);
-    
-    playSpecificSong(songIndex);
+  try {
+    showLoading();
+    mp3Files = await getSongsList();
+    if (mp3Files.length > 0) {
+      let songIndex = getSongIndexToLocalStorage('playlist');
+      
+      // Update Now Playing info for initial song
+      const initialSong = mp3Files[songIndex];
+      updateNowPlayingInfo(initialSong.name);
+      
+      playSpecificSong(songIndex);
 
-    const songListContainer = document.getElementById("songList");
-    songListContainer.innerHTML = '';
-    mp3Files.forEach((song, index) => {
-      const listItem = document.createElement("li");
-      listItem.innerHTML = `
-        <span class="song-name">${song.name}</span>
-        <button class="play-button" data-index="${index}">
-          <span class="material-icons-round">
-            ${index === currentSongIndex && isPlaying ? 'pause' : 'play_arrow'}
-          </span>
-        </button>
-      `;
-      
-      const playButton = listItem.querySelector('.play-button');
-      playButton.addEventListener('click', () => {
-        if (index === currentSongIndex) {
-          togglePlayPause();
-        } else {
-          playSpecificSong(index);
-        }
+      const songListContainer = document.getElementById("songList");
+      songListContainer.innerHTML = '';
+      mp3Files.forEach((song, index) => {
+        const listItem = document.createElement("li");
+        listItem.innerHTML = `
+          <span class="song-name">${song.name}</span>
+          <button class="play-button" data-index="${index}">
+            <span class="material-icons-round">
+              ${index === currentSongIndex && isPlaying ? 'pause' : 'play_arrow'}
+            </span>
+          </button>
+        `;
+        
+        const playButton = listItem.querySelector('.play-button');
+        playButton.addEventListener('click', () => {
+          if (index === currentSongIndex) {
+            togglePlayPause();
+          } else {
+            playSpecificSong(index);
+          }
+        });
+        
+        songListContainer.appendChild(listItem);
       });
-      
-      songListContainer.appendChild(listItem);
-    });
-  } else {
+    } else {
+      console.error("No songs found.");
+      updateNowPlayingInfo(null);
+    }
+  } catch (error) {
     console.error("No songs found.");
     updateNowPlayingInfo(null);
+  } finally {
+    hideLoading();
   }
 }
 
@@ -231,6 +239,7 @@ function prevSong() {
 
 async function setSource(repo) {
   try {
+    showLoading();
     const response = await fetch(`${API_BASE_URL}/songs/source`, {
       method: 'POST',
       headers: {
@@ -257,6 +266,8 @@ async function setSource(repo) {
     displayMP3Urls();
   } catch (error) {
     console.error('Error changing source:', error);
+  } finally {
+    hideLoading();
   }
 }
 
@@ -350,5 +361,33 @@ function updateCategoryButtons(selectedRepo) {
     if (button.textContent === buttons[selectedRepo]) {
       button.classList.add('active');
     }
+  });
+}
+
+// Add loading indicator handling
+function showLoading() {
+  document.getElementById('loadingBar').style.display = 'block';
+}
+
+function hideLoading() {
+  document.getElementById('loadingBar').style.display = 'none';
+}
+
+// Add song hover effect
+function initializeSongListHover() {
+  document.querySelectorAll('.song-list li').forEach(item => {
+    item.addEventListener('mouseenter', () => {
+      if (!item.classList.contains('playing')) {
+        const playButton = item.querySelector('.play-button .material-icons-round');
+        playButton.textContent = 'play_arrow';
+      }
+    });
+
+    item.addEventListener('mouseleave', () => {
+      if (!item.classList.contains('playing')) {
+        const playButton = item.querySelector('.play-button .material-icons-round');
+        playButton.textContent = 'music_note';
+      }
+    });
   });
 }

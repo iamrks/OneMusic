@@ -11,9 +11,16 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
+  <div id="loadingBar" class="loading" style="display: none;"></div>
   <div class="player-container">
     <div class="player-header">
-      <h1>One Player</h1>
+      <div class="logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" class="logo-icon">
+          <circle cx="20" cy="20" r="18" class="logo-circle" fill="none" stroke="currentColor" stroke-width="2"/>
+          <path d="M16 12v16l12-8z" class="logo-play" fill="currentColor"/>
+        </svg>
+        <h1>One Player</h1>
+      </div>
       <button id="themeToggle" class="theme-toggle">
         <span class="material-icons-round">dark_mode</span>
       </button>
@@ -40,7 +47,11 @@
 
     <!-- Seek Bar and Time Display -->
     <div class="seek-container">
-      <span id="current-time" class="time">00:00</span>
+      <div class="time-display">
+        <span id="current-time" class="time">00:00</span>
+        <span class="time-separator">/</span>
+        <span id="total-time" class="time">00:00</span>
+      </div>
       <div class="seek-bar-wrapper">
         <input
           type="range"
@@ -52,7 +63,6 @@
         />
         <div class="seek-bar-background"></div>
       </div>
-      <span id="total-time" class="time">00:00</span>
     </div>
 
     <!-- Control Buttons -->
