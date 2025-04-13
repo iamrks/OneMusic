@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>One Player</title>
+  <link rel="stylesheet" href="./styles/style.css" />
+  <!-- Add Material Icons -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+  <!-- Add Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="player-container">
+    <div class="player-header">
+      <h1>One Player</h1>
+      <button id="themeToggle" class="theme-toggle">
+        <span class="material-icons-round">dark_mode</span>
+      </button>
+    </div>
+
+    <!-- Category Buttons -->
+    <div class="category-buttons">
+      <button class="category-btn active" onclick="setSource('NewSongs')">New</button>
+      <button class="category-btn" onclick="setSource('OldMusic')">Old</button>
+      <button class="category-btn" onclick="setSource('bhakti')">Bhakti</button>
+    </div>
+
+    <!-- Now Playing Section -->
+    <div class="now-playing">
+      <div class="song-info">
+        <div class="song-art">
+          <span class="material-icons-round">music_note</span>
+        </div>
+        <div class="song-details">
+          <h2 class="current-song-name">Select a song</h2>
+          <p class="playlist-name">From: New Songs</p>
+        </div>
+    </div>
+
+    <!-- Seek Bar and Time Display -->
+    <div class="seek-container">
+      <span id="current-time" class="time">00:00</span>
+      <div class="seek-bar-wrapper">
+        <input
+          type="range"
+          id="seek-bar"
+          value="0"
+          step="0.1"
+          min="0"
+          max="100"
+        />
+        <div class="seek-bar-background"></div>
+      </div>
+      <span id="total-time" class="time">00:00</span>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="controls">
+      <button class="control-btn" onclick="prevSong()">
+        <span class="material-icons-round">skip_previous</span>
+      </button>
+      <button id="playPauseButton" class="control-btn primary" onclick="togglePlayPause()">
+        <span class="material-icons-round">play_arrow</span>
+      </button>
+      <button class="control-btn" onclick="nextSong()">
+        <span class="material-icons-round">skip_next</span>
+      </button>
+    </div>
+
+    <div class="songs-container">
+      <h3>Songs</h3>
+      <ul class="song-list" id="songList"></ul>
+    </div>
+  </div>
+
+  <!-- Audio Element -->
+  <audio id="audioElement" preload="auto"></audio>
+
+  <!-- Your custom script -->
+  <script src="./js/script.js"></script>
+</body>
+</html>
