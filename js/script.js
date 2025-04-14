@@ -116,6 +116,7 @@ function updateMediaSessionMetadata() {
         },
       ],
     });
+
     navigator.mediaSession.setActionHandler("play", togglePlayPause);
     navigator.mediaSession.setActionHandler("pause", togglePlayPause);
     navigator.mediaSession.setActionHandler("previoustrack", prevSong);
@@ -138,12 +139,6 @@ async function playSpecificSong(index) {
   audioElement.src = `${API_BASE_URL}${song.path}`;
   audioElement.load();
 
-  // Add loadedmetadata event listener to get duration
-  audioElement.onloadedmetadata = () => {
-    duration = audioElement.duration;
-    updateTotalTime();
-  };
-
   audioElement.onplay = () => {
     isPlaying = true;
     updatePlayPauseButton();
@@ -160,6 +155,18 @@ async function playSpecificSong(index) {
   };
 
   audioElement.onended = nextSong;
+  audioElement.onseeked = updateSeekBar;
+  audioElement.onloadmetadata = () => {
+    duration = audioElement.duration;
+    if (!isNaN(duration) && duration > 0) {
+      updateSeekBar();
+      updateTotalTime();
+    }
+  };
+
+  // Update media session metadata right before playing
+  updateMediaSessionMetadata();
+  
   audioElement.play();
 }
 
@@ -226,6 +233,7 @@ function seekAudio(event) {
 }
 
 function nextSong() {
+  console.log('nextSong', currentSongIndex);
   if (currentSongIndex < mp3Files.length - 1) {
     currentSongIndex++;
   } else {
@@ -236,6 +244,7 @@ function nextSong() {
 }
 
 function prevSong() {
+  console.log('prevSong', currentSongIndex);
   if (currentSongIndex > 0) {
     currentSongIndex--;
   } else {
@@ -528,3 +537,46 @@ function updateSongsList(songs, searchTerm = '') {
     songListContainer.appendChild(listItem);
   });
 }
+
+// Add this function to provide alternative media key support
+function setupAlternativeMediaKeySupport() {
+  // Listen for keyboard media keys
+  document.addEventListener('keyup', (e) => {
+    console.log("Key pressed:", e.key, e.code);
+    
+    // Standard media keys
+    if (e.code === 'MediaTrackNext' || e.code === 'F9') {
+      console.log("Next track key detected");
+      nextSong();
+    } else if (e.code === 'MediaTrackPrevious' || e.code === 'F7') {
+      console.log("Previous track key detected");
+      prevSong();
+    } else if (e.code === 'MediaPlayPause' || e.code === 'F8') {
+      console.log("Play/Pause key detected");
+      togglePlayPause();
+    }
+  });
+  
+  // Also handle regular keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Only handle if not in an input field
+    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      if (e.code === 'Space') {
+        e.preventDefault(); // Prevent page scroll
+        togglePlayPause();
+      } else if (e.code === 'ArrowRight' && e.altKey) {
+        nextSong();
+      } else if (e.code === 'ArrowLeft' && e.altKey) {
+        prevSong();
+      }
+    }
+  });
+  
+  console.log("Alternative media key support initialized");
+}
+
+// Call this in your initialization
+document.addEventListener('DOMContentLoaded', () => {
+  // ... existing code ...
+  setupAlternativeMediaKeySupport();
+});
