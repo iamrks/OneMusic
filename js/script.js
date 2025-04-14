@@ -288,16 +288,6 @@ async function setSource(repo) {
   }
 }
 
-function toggleDolby() {
-  dolbyEnabled = !dolbyEnabled; // Toggle Dolby status
-
-  const button = document.querySelector('.toggle-dolby-btn');
-  button.textContent = dolbyEnabled ? "Disable Dolby" : "Enable Dolby"; // Update button text
-
-  // Reload the current song with the new setting
-  playSpecificSong(currentSongIndex);
-}
-
 function setSongIndexToLocalStorage(playlistKey, index) {
   localStorage.setItem(playlistKey, index);
 }
@@ -453,7 +443,6 @@ function initializeSearch() {
     searchInput.value = '';
     clearButton.style.display = 'none';
     resetSearch();
-    // Don't close the search container immediately to allow for new searches
   });
   
   // Handle Escape key
@@ -538,7 +527,6 @@ function updateSongsList(songs, searchTerm = '') {
   });
 }
 
-// Add this function to provide alternative media key support
 function setupAlternativeMediaKeySupport() {
   // Listen for keyboard media keys
   document.addEventListener('keyup', (e) => {
@@ -557,7 +545,6 @@ function setupAlternativeMediaKeySupport() {
     }
   });
   
-  // Also handle regular keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     // Only handle if not in an input field
     if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
@@ -575,8 +562,6 @@ function setupAlternativeMediaKeySupport() {
   console.log("Alternative media key support initialized");
 }
 
-// Call this in your initialization
 document.addEventListener('DOMContentLoaded', () => {
-  // ... existing code ...
   setupAlternativeMediaKeySupport();
 });
