@@ -272,6 +272,7 @@ async function setSource(repo) {
     const { songs } = await response.json();
     mp3Files = songs;
     currentSongIndex = 0;
+    setSongIndexToLocalStorage('playlist', currentSongIndex);
     
     // Update playlist name
     document.querySelector('.playlist-name').textContent = `From: ${repo}`;
